@@ -6,7 +6,7 @@ import numpy as np
 import matplotlib.pyplot as plt 
 
 
-num_samples = 1000
+num_samples = 100
 
 # make a simple unit circle 
 theta = np.linspace(0, 2*np.pi, num_samples)
