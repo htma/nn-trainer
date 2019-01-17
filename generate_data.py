@@ -31,13 +31,16 @@ points = list(zip(xr[0], yr[0]))
 with open('data/dataset.csv','w') as output_file:
     for point in points:
         if math.sqrt(point[0]**2+point[1]**2) <= 1:
+            output_file.write(str(1)+",")
             output_file.write(str(point[0])+ ",")
-            output_file.write(str(point[1])+ ",")
-            output_file.write(str(1)+"\n")
+            output_file.write(str(point[1])+ "\n")
+           
         else:
+            output_file.write(str(0)+",")
             output_file.write(str(point[0])+ ",")
-            output_file.write(str(point[1])+ ",")
-            output_file.write(str(0)+"\n")
+            output_file.write(str(point[1])+ "\n")
+ 
+
 output_file.close()
         
 # plots
