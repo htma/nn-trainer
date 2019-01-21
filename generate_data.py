@@ -18,10 +18,9 @@ a, b = 1 * np.cos(theta), 1 * np.sin(theta)
 
 
 # generate the num_samples points within a rectangle
-
-xr = -1.5+ np.random.rand(1,num_samples)*3
-yr = -1.5+ np.random.rand(1,num_samples)*3
-points = list(zip(xr[0], yr[0]))
+x = -1.5+ np.random.rand(num_samples,2)*3
+xr, yr = x[:,0], x[:,1]
+points = list(zip(xr, yr))
 
 
 #        print('The label of the point {} is {:}'.format((point[0], point[1]), 1))

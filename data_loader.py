@@ -29,6 +29,8 @@ class MyCustomDataset(Dataset):
         data = np.asarray(self.data.iloc[index][1:])
   
         data = torch.from_numpy(data)
+        data = data.type(torch.FloatTensor)
+        print('data dtype', data.dtype)
 #        if self.transforms is not None:
  #           data = self.transforms(data)
         return (data, label)
