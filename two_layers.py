@@ -8,54 +8,55 @@ import torch.nn.functional as F
 import torch.optim as optim
 from torchvision import datasets, transforms
 
+from data_loader import MyCustomDataset
+
 dtype = torch.float
 device = torch.device("cpu")
 
 class NNet(nn.Module):
     def __init__(self):
         super(NNet, self).__init__()
-        N, D_in, H, D_out = 2, 2, 2, 1
-        self.w1 = torch.randn(D_in, H, device=device, dtype=dtype, requires_grad=True)
-        self.w2 = torch.randn(H, D_out, device=device, dtype=dtype, requires_grad=True)
+        N, D_in, H, D_out = 2, 2, 2, 2
+        self.fc1 = nn.Linear(D_in, H)
+        self.fc2 = nn.Linear(H, D_out)
+        #self.w1 = torch.randn(D_in, H, device=device, dtype=dtype, requires_grad=True)
+        #self.w2 = torch.randn(H, D_out, device=device, dtype=dtype, requires_grad=True)
 
     def forward(self, x):
-        x = x.mm(self.w1)
-        h_relu = F.relu(x)
-        y_pred = h_relu.mm(self.w2)
+        x = F.relu(self.fc1(x))
+        x = self.fc2(x)
+        return F.log_softmax(x)
 
-        return y_pred
+def train(batch_size=10, learning_rate=1e-2, epochs=10, log_interval=100):
+    #    x = x.type(torch.FloatTensor)
+    transformations = transforms.Compose([transforms.ToTensor()])
+    custom_dataset = MyCustomDataset('./data/dataset.csv', transformations)
 
-def train(N=2, D_in=2, H=2, D_out=1, learning_rate=1e-2, epoches=10):
-    # N is batch size;D_in is input dimension;
-    # H is hidden dimension;  D_out is output dimentsion.
-
-    x = -1.5 + np.random.rand(N, D_in)*3
-    y = np.random.rand(N, D_out)
-    x = torch.from_numpy(x)
-    x = x.type(torch.FloatTensor)
-    y = torch.from_numpy(y)
-    y = y.type(torch.FloatTensor)
+    # Define data loader
+    train_loader = torch.utils.data.DataLoader(dataset=custom_dataset,
+                                                 batch_size=10,
+                                                 shuffle=False)
 
     nnet = NNet()
-    
-    for t in range(epoches):
-        y_pred = nnet(x)
-        loss = (y_pred - y).pow(2).sum()
-        print(t, loss.item())
-
-    # Use autograd to compute the backward pass.
-        loss.backward()
-
-    # Update weigths using gradient descent.
-        with torch.no_grad():
-            nnet.w1 -= learning_rate * nnet.w1.grad
-            nnet.w2 -= learning_rate * nnet.w2.grad
-
-        # Manully zero the gradients after updating weights
-            nnet.w1.grad.zero_()
-            nnet.w2.grad.zero_()
-        
-
+    # create a stochastic gradient descent optimizer
+    optimizer = optim.SGD(nnet.parameters(), lr=learning_rate, momentum=0.9)
+    # create a loss function
+    criterion = nn.NLLLoss()
+    for epoch in range(epochs):
+        for batch_idx, (data, target) in enumerate(train_loader):
+            data, target = Variable(data), Variable(target)
+            # resize data from (batch_size, 1, 28, 28) to (batch_size, 28*28)
+          #  data = data.view(-1, 1*2)
+             
+            optimizer.zero_grad()
+            net_out = nnet(data)
+            loss = criterion(net_out, target)
+            loss.backward()
+            optimizer.step()
+            if batch_idx % log_interval == 0:
+                print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
+                    epoch, batch_idx * len(data), len(train_loader.dataset),
+                    100. * batch_idx / len(train_loader), loss.data[0]))    
 if __name__ == '__main__':
     train()
 

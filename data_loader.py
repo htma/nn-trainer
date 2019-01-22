@@ -24,13 +24,12 @@ class MyCustomDataset(Dataset):
     def __getitem__(self, index):
         # retrun data and label
         # index is the nth data/image(as tensor) you are going to return
-        label = self.labels[index].astype('uint8')
+        label = self.labels[index].astype('int64')
 
         data = np.asarray(self.data.iloc[index][1:])
   
         data = torch.from_numpy(data)
         data = data.type(torch.FloatTensor)
-        print('data dtype', data.dtype)
 #        if self.transforms is not None:
  #           data = self.transforms(data)
         return (data, label)
