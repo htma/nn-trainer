@@ -8,7 +8,7 @@ from torch.utils.data import DataLoader
 from torchvision import transforms
 
 class MyCustomDataset(Dataset):
-    def __init__(self, csv_path, transforms=None):
+    def __init__(self, csv_path, transform=None):
         """
         Args:
             csv_path: path to csv file
@@ -39,8 +39,8 @@ class MyCustomDataset(Dataset):
 
 if __name__ == '__main__':
     # define transorms and custom dataset
-    transformations = transforms.Compose([transforms.ToTensor()])
-    custom_dataset = MyCustomDataset('./data/dataset.csv', transformations)
+    transform = transforms.Compose([transforms.ToTensor()])
+    custom_dataset = MyCustomDataset('./data/dataset.csv', transform=transform)
 
     # Define data loader
     dataset_loader = DataLoader(dataset=custom_dataset,
