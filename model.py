@@ -34,8 +34,7 @@ def main():
     MyCustomDataset('./data/dataset.csv',
                     transform=transforms.Compose([
                         transforms.ToTensor()])),
-        batch_size=200,
-        shuffle=False)
+        batch_size=200, shuffle=False)
 
 #    train_loader = torch.utils.data.DataLoader(
  #       datasets.MNIST('../data', train=True, download=True,

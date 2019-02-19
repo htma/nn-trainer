@@ -6,7 +6,7 @@ import numpy as np
 import matplotlib.pyplot as plt 
 
 
-num_samples = 10000 # number of points 
+num_samples = 1000 # number of points 
 
 # make a simple unit circle 
 theta = np.linspace(0, 2*np.pi, 100)
@@ -21,10 +21,6 @@ a, b = 1 * np.cos(theta), 1 * np.sin(theta)
 x = -1.5+ np.random.rand(num_samples,2)*3
 xr, yr = x[:,0], x[:,1]
 points = list(zip(xr, yr))
-
-
-#        print('The label of the point {} is {:}'.format((point[0], point[1]), 1))
- 
 
 # write the data to a file
 with open('data/dataset.csv','w') as output_file:
