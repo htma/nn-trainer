@@ -15,7 +15,7 @@ class MyCustomDataset(Dataset):
             transforms: pytorch transforms for transforms and tensor conversion
         """
         # reading a csv
-        self.data = pd.read_csv(csv_path)
+        self.data = pd.read_csv(csv_path, header=None)
         self.labels = np.asarray(self.data.iloc[:, 0])
 
         #assigning transforms
@@ -46,6 +46,7 @@ if __name__ == '__main__':
     dataset_loader = DataLoader(dataset=custom_dataset,
                                                  batch_size=10,
                                                  shuffle=False)
+    print(len(dataset_loader))
     for images, labels in dataset_loader:
         print(images, labels)
     
