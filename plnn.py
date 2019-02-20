@@ -2,6 +2,10 @@ import torch
 import numpy as np
 import matplotlib.pyplot as plt
 
+import torch.nn as nn
+import torch.optim as optim
+import torch.nn.functional as F
+
 from torch.autograd import Variable
 from torchvision import datasets, transforms
 
@@ -16,10 +20,10 @@ device = torch.device("cpu")
 class PLNN(torch.nn.Module):
     def __init__(self, D_in, H1, H2, H3, D_out):
         super(PLNN, self).__init__()
-        self.hidden1 = torch.nn.Linear(D_in, H1)
-        self.hidden2 = torch.nn.Linear(H1, H2)
-        self.hidden3 = torch.nn.Linear(H2, H3)
-        self.output = torch.nn.Linear(H3, D_out)
+        self.hidden1 = nn.Linear(D_in, H1)
+        self.hidden2 = nn.Linear(H1, H2)
+        self.hidden3 = nn.Linear(H2, H3)
+        self.output = nn.Linear(H3, D_out)
         # Create random Tensors for  weights.
         # Setting requires_grad=True indicates that we want to compute
         # gradients w.r.t. these Tensors during the backward pass.
@@ -46,12 +50,16 @@ class PLNN(torch.nn.Module):
         h3_relu = h3.clamp(min=0)
         y_pred = self.output(h3_relu)
         state = list(map(int, state))
-        return state
+        
+        return state, F.log_softmax(y_pred)
 
 def main():
     N, D_in, D_out = 10, 2, 2
     H1, H2, H3 = 4, 16, 2
     model = PLNN(D_in, H1, H2, H3, D_out)
+    optimizer = optim.SGD(model.parameters(), lr=0.01, momentum=0.9)
+    criterion = nn.NLLLoss()
+    
     print(model)
     #batches = generate_batches(N)
 
@@ -60,27 +68,45 @@ def main():
                         transform=transforms.Compose([
                             transforms.ToTensor()])),
         batch_size=200,shuffle=False)    
- 
-    # paint configures
-    fig, ax = plt.subplots()
-    for batch_idx, (data, target)  in enumerate(train_loader):
-        data, target = Variable(data), Variable(target)
 
-        state = model(data)
+    # define  an unit circle
+    theta = np.linspace(0, 2*np.pi, 100)
+    a, b = 1 * np.cos(theta), 1 * np.sin(theta)
+  
+    # training
+    for epoch in range(3):
+        fig, ax = plt.subplots()
+        for batch_idx, (data, target)  in enumerate(train_loader):
+            data, target = Variable(data), Variable(target)
+            optimizer.zero_grad()
+            state,predictions = model(data)
+            loss = criterion(predictions, target)
+            loss.backward()
+            optimizer.step()
 
-        ndata = data.numpy()
-        for x in ndata:
-            rect = plt.Rectangle(x, 0.3, 0.3, fc=build_RGB(state))
-            ax.add_patch(rect)
+            # painting training  results
+            ndata = data.numpy()
+            print('ndata is ', ndata)
+            for x in ndata:
+                rect = plt.Rectangle(x, 0.1, 0.1, fc=build_RGB(state))
+                ax.add_patch(rect)
 
-    ax.set(xlabel='$x_1$', ylabel='$x_2$',
-           title='Train data')
-    ax.xaxis.set_ticks([-1.5, -1.2, -0.9, -0.6,-0.3, 0, 0.3,0.6,0.9,1.2,1.5])
-    ax.yaxis.set_ticks([-1.5, -1.2, -0.9, -0.6,-0.3, 0, 0.3,0.6,0.9,1.2,1.5])
+            plt.plot(a, b, linestyle='-', linewidth=2, label='Circle')
+            ax.set(xlabel='$x_1$', ylabel='$x_2$', title='Train data')
+            ax.xaxis.set_ticks([-1.5, -1.2, -0.9, -0.6,-0.3, 0, 0.3,0.6,0.9,1.2,1.5])
+            ax.yaxis.set_ticks([-1.5, -1.2, -0.9, -0.6,-0.3, 0, 0.3,0.6,0.9,1.2,1.5])
     
-    ax.grid(True)
-    plt.show()
-    
+            ax.grid(True)
+            plt.show()
+
+            # printing training results
+            if batch_idx % 10 == 0:
+                print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
+                    epoch, batch_idx*len(data),
+                    len(train_loader.dataset),
+                    100. * batch_idx/len(train_loader),
+                    loss.data[0]))
+
 
 if __name__ == '__main__':
     main()
