@@ -6,7 +6,7 @@ import numpy as np
 import matplotlib.pyplot as plt 
 
 
-num_samples = 10  # number of points 
+num_samples = 2000  # number of points 
 
 def generate_points(num_samples):
     # generate the num_samples points within a rectangle[-1.5, 1.5, -1.5, 1.5]
@@ -49,8 +49,8 @@ def painting(xc, yc, xr, yr):
              color='black', label='Unit Circle')
 
     # painting the points
-    plt.scatter(xc, yc, color='red', label='Positive Points')
-    plt.scatter(xr, yr, color='blue', label='Negative Points')
+    plt.scatter(xc, yc, color='red', label='Positive Point')
+    plt.scatter(xr, yr, color='blue', label='Negative Point')
     plt.axis([-1.5, 1.5, -1.5, 1.5])
     ax.set(xlabel='$x_1$', ylabel='$x_2$', title='Train data')
     plt.grid()
@@ -59,7 +59,7 @@ def painting(xc, yc, xr, yr):
 
 def main():
     xc, yc, xr, yr = generate_points(num_samples)
-    painting(xc, yc, xr, yr)
+ #   painting(xc, yc, xr, yr)
     write_to_file(xc,yc,xr,yr)
 
 if __name__ == '__main__':
