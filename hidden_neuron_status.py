@@ -1,4 +1,4 @@
-import matplotlib.pyplot as plt
+import  matplotlib.pyplot as plt
 
 from mpl_toolkits.axes_grid1.axes_rgb import RGBAxes
 
@@ -24,7 +24,7 @@ def neuron_active(t):
     return ct.data.numpy()[0].astype(int)
 
 def build_RGB(state):
-    '''return a triple from a list of ints states, which represent the valuses of RGB'''
+    '''return a triple from a list of ints status, which represent the valuses of RGB'''
     R, G, B = state[:8], state[8:16], state[16:]
     R = int(''.join(list(map(str, R))), 2)
     G = int(''.join(list(map(str, G))), 2)
@@ -32,8 +32,8 @@ def build_RGB(state):
     RGB = '#%02x%02x%02x' % (R, G, B)
     return RGB
 
-def paint_states(states):
-    rgb = build_RGB(states)
+def paint_state(state):
+    rgb = build_RGB(state)
     fig, ax = plt.subplots()
     rect = plt.Rectangle((-1.2, -1.5), 0.3, 0.3, fc=rgb)
     plt.axis([-1.5, 1.5, -1.5, 1.5])
@@ -52,9 +52,8 @@ if __name__ == '__main__':
 #    print(t)
  #   print(hid_filter(t))
 
-#    states = [1]*22
-#    paint_states(states)
-
+    state = [0,1,1]*8
+    paint_state(state)
 
  #   print(produce_data())
 
