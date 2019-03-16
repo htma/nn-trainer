@@ -8,8 +8,8 @@ from torchvision import datasets, transforms
 
 from data_loader import MyCustomDataset
 
-from plot_tensor import paint_tensor, write_tensor_to_file
-from plot_tensor import paint_from_tensors
+from plot_data import paint_tensor, write_tensor_to_file
+from plot_data import paint_from_tensors
 
 class Net(nn.Module):
     def __init__(self):
@@ -30,15 +30,15 @@ def train(args, model, device, train_loader, optimizer, epoch):
     model.train()
     for batch_idx, (data, target) in enumerate(train_loader):
         data, target = data.to(device), target.to(device)
+#        data = data.view(-1, 2) # maybe should use this line for multiple dimension data
         optimizer.zero_grad()
         output = model(data)
-        _, pred = torch.max(output.data, 1)
         loss = F.nll_loss(output, target)
         loss.backward()
         optimizer.step()
 
         if batch_idx % args.log_interval == 0:
-            print('########', batch_idx, len(data), len(train_loader.dataset), len(train_loader))
+       #     print('########', batch_idx, len(data), len(train_loader.dataset), len(train_loader))
             print('Train Epoch: {} [{}/{} ({:.0f}%)]\t Loss: {:.6f}'.format(
                 epoch, batch_idx*len(data), len(train_loader.dataset), 100.*batch_idx/len(train_loader), loss.item()))
 
@@ -47,20 +47,21 @@ def test(args, model, device, test_loader):
     test_loss, correct = 0, 0
 
     with torch.no_grad():
-        for data, labels in test_loader:
-            data, labels = data.to(device), labels.to(device)
+        for data, target in test_loader:
+            data, target = data.to(device), target.to(device)
+#            data = data.view(-1, 2)
             output = model(data)
-            test_loss += F.nll_loss(output, labels, reduction='sum').item() # sum up batch loss
+            test_loss += F.nll_loss(output, target, reduction='sum').item() # sum up batch loss
             pred = output.argmax(dim=1, keepdim=True) # get the index of the max log-probability
-            correct += pred.eq(labels.view_as(pred)).sum().item()
+            correct += pred.eq(target.view_as(pred)).sum().item()
+
             # plot and write test result into a file
-   #         paint_tensor(data)
-            write_tensor_to_file(data, labels, './data/predicted_result.csv')
-    paint_from_tensors(data, pred, './data/predicted_result.csv', 'Test results')
+            write_tensor_to_file(data, pred, './data/predicted_result.csv')
+   # paint_from_tensors(data, pred, './data/predicted_result.csv', 'Test results')
 
     test_loss /= len(test_loader.dataset)
 
-    print('\nTest set: average loss: {:.4f}, Accuracy: {}/{}({:.0f}%)\n'.format(
+    print('\nTest set: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n'.format(
         test_loss, correct, len(test_loader.dataset),
         100. * correct / len(test_loader.dataset)))
     
@@ -70,7 +71,7 @@ def main():
     parser.add_argument('--batch-size', type=int, default=64,
                         metavar='N', help='input batch size for training (default: 64)')
     parser.add_argument('--test-batch-size', type=int, default=1000, metavar='N', help='input batch size for testing (default: 1000)')
-    parser.add_argument('--epochs', type=int, default=10,
+    parser.add_argument('--epochs', type=int, default=2,
                         metavar='N', help='number of epochs to train (default: 10)')
     parser.add_argument('--lr', type=float, default=0.01,
                         metavar='LR', help='learning rate default(: 0.01)')
@@ -79,7 +80,7 @@ def main():
     parser.add_argument('--no-cuda', action='store_true', default=True, help='desables CUDA training')
     parser.add_argument('--seed', type=int, default=1, metavar='S',
                         help='random seed (default: 1)')
-    parser.add_argument('--log-interval', type=int, default=10,
+    parser.add_argument('--log-interval', type=int, default=50,
                         metavar='N', help='how many batches to wait before logging training status')
     parser.add_argument('--save-model', action='store_true', default=False, help='For saving the current model')
     args = parser.parse_args()
@@ -97,18 +98,36 @@ def main():
         batch_size=args.batch_size, shuffle=True, **kwargs)
 
     test_loader = torch.utils.data.DataLoader(
-        MyCustomDataset('./data/dataset.csv',
+        MyCustomDataset('./data/dataset.csv', 
                         transform=transforms.Compose([
                             transforms.ToTensor()])),
-        batch_size=args.batch_size, shuffle=False, **kwargs)
-                            
+        batch_size=args.test_batch_size, shuffle=True, **kwargs)
+
+#    print('length of test loader', len(test_loader))
+ #   print('length of test loader dataset', len(test_loader.dataset))
+
+    # train_loader = torch.utils.data.DataLoader(
+    #     datasets.MNIST('../data', train=True, download=True,
+    #                    transform=transforms.Compose([
+    #                        transforms.ToTensor()
+    #                        ])),
+    #     batch_size=args.batch_size, shuffle=True, **kwargs)
+
+    # test_loader = torch.utils.data.DataLoader(
+    #     datasets.MNIST('../data', train=False,
+    #                    transform=transforms.Compose([
+    #                        transforms.ToTensor()
+    #                        ])),
+    #     batch_size=args.test_batch_size, shuffle=True,**kwargs)
+    
     # training the model
     model = Net().to(device)
+    print(model)
     optimizer = optim.SGD(model.parameters(), lr=args.lr,
                           momentum=args.momentum)
     for epoch in range(1, args.epochs+1):
         train(args, model, device, train_loader, optimizer, epoch)
-    test(args, model, device, test_loader)
+        test(args, model, device, test_loader)
 
     if (args.save_model):
         torch.save(model.state_dict(), 'mnist_cnn.pt')
