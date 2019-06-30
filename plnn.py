@@ -84,48 +84,24 @@ def main():
                             transforms.ToTensor()])),
         batch_size=10,shuffle=False)    
 
-    # define  an unit circle
-    theta = np.linspace(0, 2*np.pi, 100)
-    a, b = 1 * np.cos(theta), 1 * np.sin(theta)
-  
-    # training
+    # state_dict: keep the active state values, such as {state_id, state_value}
     state_dict = dict()
-    for epoch in range(2):
-        fig, ax = plt.subplots()
+    state_id = 0 
 
-        for batch_idx, (data, target)  in enumerate(train_loader):
-            data, target = data.to(device), target.to(device)
-            optimizer.zero_grad()
-            states,predictions = model(data)
-            for i in range(states.shape[0]):
-                state = int(''.join(list(map(str, states[0,:]))), 2)
-                if state not in state_dict.values():
-                    state_dict[str(epoch)+str(batch_idx)+str(i)] = state
-            print('state dict is:  ', state_dict)
-            loss = criterion(predictions, target)
-            loss.backward()
-            optimizer.step()
+    for batch_idx, (data, target)  in enumerate(train_loader):
+        data, target = data.to(device), target.to(device)
+        optimizer.zero_grad()
+        states,predictions = model(data)
+        for i in range(states.shape[0]):
+            state = int(''.join(list(map(str, states[0,:]))), 2)
+            if state not in state_dict.values():
+                id += 1
+                state_dict[id] = state
 
-            # printing training results
-
-            # if batch_idx % 10 == 0:
-            #     print('Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
-            #         epoch, batch_idx*len(data), len(train_loader.dataset), 100.*batch_idx/len(train_loader),  loss.item()))
-
-                
-           #  # painting training  results
-#             ndata = data.numpy()
-#             for x in ndata:
-#                 rect = plt.Rectangle(x, 0.1, 0.1, fc=build_RGB(state))
-#                 ax.add_patch(rect)
-
-#         plt.plot(a, b, linestyle='-', linewidth=2, label='Circle')
-#         ax.set(xlabel='$x_1$', ylabel='$x_2$', title='Train data')
-#         ax.xaxis.set_ticks([-1.5, -1.2, -0.9, -0.6,-0.3, 0, 0.3,0.6,0.9,1.2,1.5])
-#         ax.yaxis.set_ticks([-1.5, -1.2, -0.9, -0.6,-0.3, 0, 0.3,0.6,0.9,1.2,1.5])
-    
-#         ax.grid(True)
-# #        plt.show()
+        print('state dict is:  ', state_dict)
+        loss = criterion(predictions, target)
+        loss.backward()
+        optimizer.step()
 
 if __name__ == '__main__':
     main()
