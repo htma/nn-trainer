@@ -15,12 +15,13 @@ def cartesian_product(x,y):
 def write_to_file(x, y):
     with open('data/zcurve_points.csv','w') as output_file:
         for i in range(len(x)):
+            output_file.write(str(1)+',')
             output_file.write(str(x[i])+ ',')
             output_file.write(str(y[i])+ '\n')
 
     output_file.close()
 
-k = 6 # number of points every axis
+k = 4 # number of points every axis
 x = np.linspace(-1.5+3/2**(k+1), 1.5-3/2**(k+1), 2**k)
 y = np.linspace(-1.5+3/2**(k+1), 1.5-3/2**(k+1), 2**k)
 
