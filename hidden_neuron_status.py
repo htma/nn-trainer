@@ -16,12 +16,12 @@ def produce_data():
     return data
     
 
-def neuron_active(t):
+def relu_active(t):
     ct = t.clone()
     ct[t < 0] = 0    
     ct[t >= 0] = 1
 
-    return ct.data.numpy()[0].astype(int)
+    return ct.data.numpy().astype(int)
 
 def build_RGB(state):
     '''return a triple from a list of ints status, which represent the valuses of RGB'''
@@ -47,13 +47,16 @@ def paint_state(state):
 
     
 if __name__ == '__main__':
-    t = torch.tensor([[-0.5731625, -0.26016295, -1.2452601, 0.23687911]])
-  #  t = torch.randn(4)
-#    print(t)
- #   print(hid_filter(t))
+    t = torch.tensor([[-0.5731625, -0.26016295, -1.2452601, 0.23687911],])
+  #  t = torch.randn(4,2)
+    print(t)
+    print(neuron_active(t))
 
-    state = [0,1,1]*8
-    paint_state(state)
+    # state = [1]*3
+    # print((state))
+    # state = int(''.join(list(map(str, state))), 2)
+    # print(state)
+#    paint_state(state)
 
  #   print(produce_data())
 
