@@ -1,5 +1,3 @@
-import numpy as np
-
 import torch
 import torchvision
 import torch.nn as nn
@@ -14,28 +12,26 @@ train_dataset = datasets.FashionMNIST(root='./data',
                             transform=transforms.ToTensor(),
                             download=True)
 
+print(train_dataset)
+
+print(train_dataset.train_data.size())
+print(train_dataset.train_labels[0])
+print(train_dataset.train_labels[1])
+print(train_dataset.train_labels[2])
+print(train_dataset.train_labels[3])
+
+# Inspecting a single image
+print(train_dataset[0][0].size())
+print(train_dataset[0][0].dtype)
+# print(train_dataset[0][1])
+#print(train_dataset.train_data[0])
+
+transform = transforms.Compose([transforms.ToTensor()])
+
 test_dataset = datasets.FashionMNIST(root='./data', 
                            train=False, 
                            transform=transforms.ToTensor())
 
-train_filter = np.where((train_dataset.train_labels == 8) |
-                        (train_dataset.train_labels == 9))
-
-test_filter = np.where((test_dataset.test_labels == 8) |
-                        (test_dataset.test_labels == 9))
-
-train_dataset.train_data = train_dataset.train_data[train_filter]
-train_dataset.train_labels = train_dataset.train_labels[train_filter]
-train_dataset.train_labels[train_dataset.train_labels == 8] = 0
-train_dataset.train_labels[train_dataset.train_labels == 9] = 1
-
-test_dataset.test_data = test_dataset.test_data[test_filter]
-test_dataset.test_labels = test_dataset.test_labels[test_filter]
-test_dataset.test_labels[test_dataset.test_labels == 8] = 0
-test_dataset.test_labels[test_dataset.test_labels == 9] = 1
-
-print(train_dataset)
-print(test_dataset.test_labels)
 
 batch_size = 100
 n_iters = 6000
@@ -48,25 +44,31 @@ train_loader = torch.utils.data.DataLoader(
                shuffle=True)
 
 test_loader = torch.utils.data.DataLoader(
-               dataset=test_dataset,
-               batch_size=batch_size, 
-               shuffle=False)
+              dataset=test_dataset, 
+              batch_size=batch_size, 
+              shuffle=False)
 
 import matplotlib.pyplot as plt
 import numpy as np
 
 def imshow(img):
+    print('img size is ', img.size())
     img = img /2 + 0.5
     npimg = img.numpy()
-    trimg = np.transpose(npimg, (1,2,0))
-    plt.imshow(trimg)
+
+#    plt.imshow(npimg)
+    plt.imshow(np.transpose(npimg, (1,2,0)))
     plt.show()
 
-# print(fmnist_loader)
 dataiter = iter(train_loader)
 images, labels = dataiter.next()
+print(len(images))
+print(labels.size())
+#show_img = images[1].numpy().reshape(28,28)
+#plt.imshow(show_img, cmap='gray')
+#plt.show()
 imshow(torchvision.utils.make_grid(images))
-
+    
 class ThreeLayerFNN(nn.Module):
     def __init__(self, D_in, D_out):
         super(ThreeLayerFNN, self).__init__()
@@ -82,7 +84,7 @@ class ThreeLayerFNN(nn.Module):
         out = self.fc3(out)
         return out
 
-D_in, D_out = 28*28, 2
+D_in, D_out = 28*28, 10
 model = ThreeLayerFNN(D_in, D_out)
 print(model)
 
@@ -129,5 +131,4 @@ for epoch in range(num_epochs):
 
             # Print Loss
             print('Iteration: {}. Loss: {}. Accuracy: {}'.format(iter, loss.item(), accuracy))
-
 
