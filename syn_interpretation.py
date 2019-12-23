@@ -1,3 +1,4 @@
+import numpy as np
 import torch
 import torch.nn as nn
 import torchvision.transforms as transforms
@@ -29,17 +30,58 @@ def check_states(model, image):
         active_states, output = model(image)
         print(active_states)
 
-def interpret_instance(model, image):
+def calculate_ineuqality_coefficients(model, image):
     states, output = model(image)
     w1, b1 = model.state_dict()['H1.weight'], model.state_dict()['H1.bias']
     w2, b2 = model.state_dict()['H2.weight'], model.state_dict()['H2.bias']
     w3, b3 = model.state_dict()['H3.weight'], model.state_dict()['H3.bias']
     w4, b4 = model.state_dict()['fc.weight'], model.state_dict()['fc.bias']
-    print(w1, b1)
-    print(w2.size(), b2.size())
-    print(w3.size(), b3.size())
-    print(w4.size(), b4.size())
+    
+    diag_s1 = torch.diag(torch.tensor((states['h1.state'][0]),
+                                      dtype=torch.float32))
+    w2_hat = torch.matmul(w2, torch.matmul(diag_s1, w1))
+    b2_hat = torch.matmul(w2, torch.matmul(diag_s1, b1)) + b2
 
+    diag_s2 = torch.diag(torch.tensor((states['h2.state'][0]),
+                                      dtype=torch.float32))
+
+    w3_hat = torch.matmul(w3, torch.matmul(diag_s2, w2_hat))
+    b3_hat = torch.matmul(w3, torch.matmul(diag_s2, b2_hat)) + b3
+    print(w3_hat.size(), b3_hat.size())
+
+    weights = torch.cat((w1, w2_hat, w3_hat)).numpy()
+    bias = torch.cat((b1, b2_hat, b3_hat)).numpy()
+    bias = bias.reshape(22, 1)
+    active_states = np.hstack((states['h1.state'], states['h2.state'],
+                               states['h3.state'])).astype(int)
+    active_states = active_states.reshape(22, 1)
+
+    weight_bias = np.append(weights, bias, axis=1)
+    weight_bias_states = np.append(weights_bias, active_states, axis=1)
+
+    output_file = open('./syn_weight_bias_states.txt', 'wb')
+    np.savetxt(output_file, weight_bias_states, delimiter=',')
+    output_file.close()
+
+def interpret_instance(file_name):
+    weight_bias_states = np.loadtxt(file_name, delimiter=',')
+    plot_lines(weight_bias_states)
+    plt.xlim((-1.5, 1.5))
+    plt.ylim((-1.5, 1.5))
+
+    plt.show()
+
+def plot_lines(weight_bias_states):
+    for row in weight_bias_states[:,:]:
+        a, b, c, _ = row
+        plot_line(a, b, c)
+
+def plot_line(a, b, c):
+    x = np.linspace(-1.5, 1.5, 1000)
+    y = -(a*x + c) / b
+    plt.plot(x, y)
+
+    
 if __name__ == '__main__':
     model = FourLayerFNN()
     model.load_state_dict(torch.load('syn_model.pkl'))
@@ -57,6 +99,6 @@ if __name__ == '__main__':
  #   _, prediction = torch.max(outputs.data, 1)
   #  print(prediction)
   #    check_states(model, image)
-    interpret_instance(model, image)
-
+    
+    interpret_instance('./syn_weight_bias_states.txt')
 
