@@ -63,17 +63,59 @@ def calculate_ineuqality_coefficients(model, image):
     np.savetxt(output_file, weight_bias_states, delimiter=',')
     output_file.close()
 
+def calculate_feasible_range(file_name):
+    '''calculate a feasible range for inequalities such as : ax + by + c <= 0 or ax+by+c >0.'''
+    weight_bias_states = np.loadtxt(file_name, delimiter=',')
+
+    positive_states = weight_bias_states[weight_bias_states[:,3]>0]
+    negative_states = weight_bias_states[weight_bias_states[:,3]==0]
+    net_positive_states = positive_states[positive_states[:,1]>0]
+    net_negative_states = negative_states[negative_states[:,1]>0]
+
+    negative_y_states = negative_states[negative_states[:,1] < 0]
+    negative_y_states = -1*negative_y_states
+    positive_y_states = np.column_stack((negative_y_states[:,:3], np.ones(negative_y_states.shape[0])))
+    net_positive_states = np.concatenate((net_positive_states,positive_y_states), axis=0)
+    print(net_positive_states)
+
+    x = np.linspace(-1.5, 1.5, 1000)
+    ny, py = [], [] # netgative state ys, positive state ys
+    for row in net_negative_states:
+        a, b, c, _ = row
+        ny.extend([(a*x + c ) / b])
+    min_y = np.minimum.reduce([ny[0], ny[1], ny[2], ny[3], ny[4], ny[5]])
+
+    for row in net_positive_states:
+        a, b, c,_ = row
+        py.extend([(a*x + c) / b])
+
+    max_y = np.maximum.reduce([py[0], py[1],py[2],py[3],py[4],
+                               py[5],py[6],py[7], py[8], py[9],
+                               py[10], py[11],py[12],py[13],py[14]])
+        
+    plt.plot(x, min_y)
+    plt.plot(x, max_y)
+    plt.xlim((-1.5, 1.5))
+    plt.ylim((-1.5, 1.5))
+    plt.xlabel(r'$x$')
+    plt.ylabel(r'$y$')
+
+    plt.show()
+    
+    
 def interpret_instance(file_name):
     weight_bias_states = np.loadtxt(file_name, delimiter=',')
     plot_lines(weight_bias_states)
     plt.xlim((-1.5, 1.5))
     plt.ylim((-1.5, 1.5))
-
+    plt.xlabel(r'$x$')
+    plt.ylabel(r'$y$')
     plt.show()
 
 def plot_lines(weight_bias_states):
-    for row in weight_bias_states[:,:]:
+    for row in weight_bias_states[:3,:]:
         a, b, c, _ = row
+        print('a: ', a, '; b:', b, '; c:', c)
         plot_line(a, b, c)
 
 def plot_line(a, b, c):
@@ -100,5 +142,6 @@ if __name__ == '__main__':
   #  print(prediction)
   #    check_states(model, image)
     
-    interpret_instance('./syn_weight_bias_states.txt')
+#    interpret_instance('./syn_weight_bias_states.txt')
+    calculate_feasible_range('./syn_weight_bias_states.txt')
 
