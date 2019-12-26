@@ -63,35 +63,46 @@ def calculate_ineuqality_coefficients(model, image):
     np.savetxt(output_file, weight_bias_states, delimiter=',')
     output_file.close()
 
+def process_negative_ys(negative_y_states):
+    states = -1*negative_y_states
+    zero_states = states[states[:,3] == 0]
+    one_states = states[states[:,3] == -1]
+    zero_to_one_states = np.column_stack((zero_states[:,:3], np.ones(zero_states.shape[0])))
+    one_to_zero_states = np.column_stack((one_states[:,:3], np.zeros(one_states.shape[0])))
+    return np.concatenate((zero_to_one_states, one_to_zero_states), axis=0)
+
+            
 def calculate_feasible_range(file_name):
     '''calculate a feasible range for inequalities such as : ax + by + c <= 0 or ax+by+c >0.'''
     weight_bias_states = np.loadtxt(file_name, delimiter=',')
 
-    positive_states = weight_bias_states[weight_bias_states[:,3]>0]
-    negative_states = weight_bias_states[weight_bias_states[:,3]==0]
-    net_positive_states = positive_states[positive_states[:,1]>0]
-    net_negative_states = negative_states[negative_states[:,1]>0]
+    # First, change the direction of inequalities with negative second column
+    negative_y_states = weight_bias_states[weight_bias_states[:,1]<=0]
+    processed_negative_y_states =  process_negative_ys(negative_y_states)
 
-    negative_y_states = negative_states[negative_states[:,1] < 0]
-    negative_y_states = -1*negative_y_states
-    positive_y_states = np.column_stack((negative_y_states[:,:3], np.ones(negative_y_states.shape[0])))
-    net_positive_states = np.concatenate((net_positive_states,positive_y_states), axis=0)
-    print(net_positive_states)
+    positive_y_states = weight_bias_states[weight_bias_states[:,1]>0]
+    new_states = np.concatenate((positive_y_states, processed_negative_y_states), axis=0)
+    print(new_states)
+
+    one_states = new_states[weight_bias_states[:,3]==1]
+    zero_states = new_states[weight_bias_states[:,3]==0]
 
     x = np.linspace(-1.5, 1.5, 1000)
-    ny, py = [], [] # netgative state ys, positive state ys
-    for row in net_negative_states:
-        a, b, c, _ = row
-        ny.extend([(a*x + c ) / b])
-    min_y = np.minimum.reduce([ny[0], ny[1], ny[2], ny[3], ny[4], ny[5]])
 
-    for row in net_positive_states:
+    #min_y = ((zero_states[:,0]*x + zero_states[:,2])/zero_states[:,1]).min(axis=0)
+    
+    ny, py = [], [] # netgative state ys, positive state ys
+    for row in zero_states:
+         a, b, c, _ = row
+         ny.extend([(a*x + c ) / b])
+    npny = np.array(ny)
+    min_y = npny.min(axis=0)
+    
+    for row in one_states:
         a, b, c,_ = row
         py.extend([(a*x + c) / b])
-
-    max_y = np.maximum.reduce([py[0], py[1],py[2],py[3],py[4],
-                               py[5],py[6],py[7], py[8], py[9],
-                               py[10], py[11],py[12],py[13],py[14]])
+    nppy = np.array(py)
+    max_y = nppy.max(axis=0)
         
     plt.plot(x, min_y)
     plt.plot(x, max_y)
