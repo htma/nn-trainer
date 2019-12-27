@@ -57,9 +57,9 @@ def calculate_ineuqality_coefficients(model, image):
     active_states = active_states.reshape(22, 1)
 
     weight_bias = np.append(weights, bias, axis=1)
-    weight_bias_states = np.append(weights_bias, active_states, axis=1)
+    weight_bias_states = np.append(weight_bias, active_states, axis=1)
 
-    output_file = open('./syn_weight_bias_states.txt', 'wb')
+    output_file = open('./weight_bias_states.txt', 'wb')
     np.savetxt(output_file, weight_bias_states, delimiter=',')
     output_file.close()
 
@@ -82,37 +82,51 @@ def calculate_feasible_range(file_name):
 
     positive_y_states = weight_bias_states[weight_bias_states[:,1]>0]
     new_states = np.concatenate((positive_y_states, processed_negative_y_states), axis=0)
-    print(new_states)
+#    print('new states: ', new_states)
 
-    one_states = new_states[weight_bias_states[:,3]==1]
-    zero_states = new_states[weight_bias_states[:,3]==0]
+    one_states = new_states[new_states[:,3]>0]
+    zero_states = new_states[new_states[:,3]<=0]
 
-    x = np.linspace(-1.5, 1.5, 1000)
+    print('ones ', one_states.shape)
+    print('zeros ', zero_states.shape)
+    x = np.linspace(-1.5, 1.5, 2000)
 
     #min_y = ((zero_states[:,0]*x + zero_states[:,2])/zero_states[:,1]).min(axis=0)
     
     ny, py = [], [] # netgative state ys, positive state ys
     for row in zero_states:
          a, b, c, _ = row
-         ny.extend([(a*x + c ) / b])
+         ny.extend([(-a*x  -c ) / b])
     npny = np.array(ny)
+    print('npny shape: ', npny.shape)
     min_y = npny.min(axis=0)
+    print('min y shape', min_y.shape)
     
     for row in one_states:
         a, b, c,_ = row
-        py.extend([(a*x + c) / b])
+        py.extend([(-a*x - c) / b])
     nppy = np.array(py)
     max_y = nppy.max(axis=0)
+    print('max y shape ', max_y.shape)
         
-    plt.plot(x, min_y)
-    plt.plot(x, max_y)
+#    plt.plot(x, min_y)
+ #   plt.plot(x, max_y)
     plt.xlim((-1.5, 1.5))
     plt.ylim((-1.5, 1.5))
     plt.xlabel(r'$x$')
     plt.ylabel(r'$y$')
+    plt.fill_between(x, min_y, max_y, where=min_y>max_y, color='grey', alpha=0.5)
 
+     # make a simple unit circle
+    theta = np.linspace(0, 2*np.pi, 100)
+    a, b = 1 * np.cos(theta), 1 * np.sin(theta)
+    plt.plot(a, b, linestyle='-', linewidth=2,
+             color='black', label='Unit Circle')
     plt.show()
     
+
+def plot_circle(x, y1, y2):
+    plt.fill_between(x, y1, y2, where=y1>y2, color='yellow', alpha=0.5)
     
 def interpret_instance(file_name):
     weight_bias_states = np.loadtxt(file_name, delimiter=',')
@@ -146,13 +160,16 @@ if __name__ == '__main__':
                             transforms.ToTensor()])),
         batch_size=1, shuffle=True)
 #    test(model, test_loader)
-    image  = test_loader.dataset.images[0]
+    image  = test_loader.dataset.images[24]
+    print(image)
     image = image.view(-1, 2)
-#    _, outputs = model(image)
+#    print(image.shape)
+  #  _, outputs = model(image)
  #   _, prediction = torch.max(outputs.data, 1)
-  #  print(prediction)
-  #    check_states(model, image)
-    
+#     print(prediction)
+#    check_states(model, image)
+
+#     calculate_ineuqality_coefficients(model, image)
 #    interpret_instance('./syn_weight_bias_states.txt')
     calculate_feasible_range('./syn_weight_bias_states.txt')
 
