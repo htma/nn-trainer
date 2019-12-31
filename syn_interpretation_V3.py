@@ -130,25 +130,23 @@ def plot_one_model(ax, model, x, images):
 def plot_multiple_models(x, images):
     
     model_name = 'syn_model'
- 
-    fig, axs = plt.subplots(3,3)
+    models = []
+    fig, axes = plt.subplots(3,3)
     fig.suptitle('Linear ranges for multiple models')
-    index = 0
-    for ax in axs.flat:
+    for i, ax in enumerate(axes.flat):
         model = FourLayerFNN()
-        model.load_state_dict(torch.load(model_name+str(index)+'.pkl'))
+        model.load_state_dict(torch.load(model_name+str(i)+'.pkl'))
         plot_one_model(ax, model, x, images)
         ax.set(xlabel='x', ylabel='y')
         ax.set_xlim((-1.5, 1.5))
         ax.set_ylim((-1.5, 1.5))
-        ax.set_title('model'+str(index))
+        ax.set_title('model'+str(i))
         ax.label_outer()
-        index += 1
     plt.show()
 
 if __name__ == '__main__':
     model = FourLayerFNN()
-#    model.load_state_dict(torch.load('syn_model.pkl'))
+    model.load_state_dict(torch.load('syn_model6.pkl'))
     x = np.linspace(-1.5, 1.5, 2000)
 
     # load test data, here is same to train_data
@@ -158,7 +156,15 @@ if __name__ == '__main__':
                             transforms.ToTensor()])),
         batch_size=1, shuffle=True)
 #    test(model, test_loader)
-    images  = test_loader.dataset.images[:700]
+    images  = test_loader.dataset.images
+    # for image in images:
+    #     image = image.view(-1,2)
+    #     coefficients_file_name = calculate_ineuqality_coefficients(model, image)
+    #     min_y, max_y = calculate_feasible_range(x, coefficients_file_name)
+    #     plt.fill_between(x, min_y, max_y, where=min_y>max_y, color=np.random.rand(3,), alpha=0.5)
+    # plt.show()
+    
+
 #    plot_one_model(model, images)
     plot_multiple_models(x, images)
 
